@@ -1,0 +1,27 @@
+# Specifies the Docker Compose file format version. Version 3.8 is a good modern choice.
+version: '3.8'
+
+# Defines the services (containers) that make up your application.
+services:
+  # Defines the 'web' service for your Flask application.
+  web:
+    # Tells Docker Compose to build the image from the Dockerfile in the current directory ('.').
+    build: .
+    # Maps port 5000 on the host to port 5000 in the container, so you can access the app via http://localhost:5000.
+    ports:
+      - "5000:5000"
+    # Mounts the current directory on the host to /app_directory in the container.
+    # This allows for live code changes during development without needing to rebuild the image.
+    volumes:
+      - .:/app_directory
+
+
+    # `docker-compose build` #builds the image from the Dockerfile in the current directory ('.')
+
+    #just run `docker-compose up` in the terminal to start the container
+    #and then open http://localhost:5000 in your browser to see the app running
+
+    #just run `docker-compose down` in the terminal to stop the container
+    #command: python /app_directory/app.py #runs the app.py file in the container
+
+    #command: flask run --host=0.0.0.0 #runs the flask app in the container

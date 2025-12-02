@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Basic HTML head with metadata and styling -->
+    <meta charset="UTF-8">
+    <title>Calculation Results</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 0 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .summary { background-color: #e8f5e9; padding: 20px; border-radius: 8px; text-align: center; font-size: 1.5em; }
+        .sem-header { background-color: #333; color: white; padding: 10px; margin-top: 20px; }
+        .back-btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #666; color: white; text-decoration: none; border-radius: 4px;}
+    </style>
+</head>
+<body>
+    <!-- Main heading for the results page -->
+    <h1>Results</h1>
+    <!-- Display the grading system that was used for the calculation -->
+    <p><strong>Grading System Used:</strong> {{ "Australia" if system == 'AUS' else "Malaysia" }}</p>
+
+    <!-- Loop through each semester's results passed from the Flask backend -->
+    {% for sem in results %}
+        <div class="sem-header">Semester {{ sem.semester_index }} (GPA: {{ sem.gpa }})</div> <!-- Header for each semester showing its GPA -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Subject Name</th>
+                    <th>Grade</th>
+                    <th>Credits</th>
+                    <th>Grade Point</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Loop through each subject within the current semester -->
+                {% for sub in sem.subjects %}
+                <tr>
+                    <td>{{ sub.code }}</td>
+                    <td>{{ sub.name }}</td>
+                    <td>{{ sub.grade }}</td>
+                    <td>{{ sub.credits }}</td>
+                    <td>{{ sub.point }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+
+    <!-- Summary section to display the final calculated CGPA -->
+    <div class="summary">
+        <strong>Overall CGPA: {{ cgpa }}</strong>
+    </div>
+
+    <!-- A link to go back to the main page to perform another calculation -->
+    <a href="/" class="back-btn">Calculate Again</a>
+</body>
+</html>

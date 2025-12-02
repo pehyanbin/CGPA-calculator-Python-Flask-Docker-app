@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPA Calculator</title>
+    <!-- Internal CSS for styling the page elements -->
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 0 20px; }
+        
+        .semester-box { 
+            border: 1px solid #ccc; 
+            padding: 15px; 
+            margin-bottom: 20px; 
+            border-radius: 8px; 
+            background-color: #f9f9f9; 
+            position: relative; 
+        }
+
+        .subject-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        input, select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+
+        button { cursor: pointer; padding: 10px 15px; border: none; border-radius: 4px; }
+        
+        /* Button styles for adding subjects, semesters, and calculating */
+        .btn-add-sub { background-color: #e0e0e0; font-size: 0.9em; }
+        .btn-add-sem { background-color: #4CAF50; color: white; margin-right: 10px;}
+        .btn-calc { background-color: #2196F3; color: white; }
+        
+        /* Style for the small 'X' button to remove a subject row */
+        .btn-remove-sub { background-color: #ff9898; color: white; padding: 5px 10px; font-size: 0.8em;}
+        
+        .btn-remove-sem { 
+            background-color: #dc3545; 
+            color: white; 
+            padding: 5px 10px; 
+            font-size: 0.8em;
+            margin-left: 15px;
+        }
+
+        /* Flexbox for the semester header to align title and remove button */
+        .sem-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        h3 { margin: 0; }
+        .controls { margin-bottom: 20px; padding: 15px; background: #eee; border-radius: 5px;}
+    </style>
+</head>
+<body>
+
+    <h1>Student GPA/CGPA Calculator</h1>
+
+    <!-- Controls section for selecting the grading system -->
+    <div class="controls">
+        <label><strong>Select Grading System:</strong></label>
+        <select id="gradingSystem">
+            <option value="AUS">Australia (HD=4.0, D=3.0...)</option>
+            <option value="MY">Malaysia (HD=4.0, D=3.67...)</option>
+        </select>
+    </div>
+
+    <!-- This container will be dynamically filled with semester blocks by JavaScript -->
+    <div id="semesters-container">
+        <!-- Semesters will be added here -->
+    </div>
+
+    <!-- Main action buttons to add a new semester or submit the form -->
+    <div style="margin-top: 20px;">
+        <button class="btn-add-sem" onclick="addSemester()">+ Add Semester</button>
+        <button class="btn-calc" onclick="submitForm()">Calculate GPA & CGPA</button>
+    </div>
+
+    <script>
+        // Array of possible grades to populate the dropdown
+        const grades = ["HD", "D", "C", "P", "Fail"];
+
+        // Function to create a new HTML row for a single subject
+        function createSubjectRow() {
+            const div = document.createElement('div');
+            div.className = 'subject-row';
+            div.innerHTML = `
+                <input type="text" placeholder="Course Code" class="s-code" required>
+                <input type="text" placeholder="Course Name" class="s-name" required>
+                <select class="s-grade">
+                    ${grades.map(g => `<option value="${g}">${g}</option>`).join('')}
+                </select>
+                <input type="number" placeholder="Credit Hours" class="s-credits" min="1" step="1" required style="width: 80px;">
+                <button class="btn-remove-sub" onclick="this.parentElement.remove()">X</button>
+            `;
+            return div;
+        }
+
+        // Function to add a new semester block to the page
+        function addSemester() {
+            const container = document.getElementById('semesters-container');
+            
+            // Create the main div for the semester
+            const semDiv = document.createElement('div');
+            semDiv.className = 'semester-box';
+            
+            // Set the inner HTML for the semester, including header and containers for subjects
+            semDiv.innerHTML = `
+                <div class="sem-header-row">
+                    <h3 class="sem-title">Semester</h3>
+                    <button class="btn-remove-sem" onclick="removeSemester(this)">Remove Semester</button>
+                </div>
+                <div class="subjects-container"></div>
+                <button class="btn-add-sub" onclick="addSubject(this)">+ Add Subject</button>
+            `;
+            
+            container.appendChild(semDiv);
+            // Automatically add one subject row to the new semester
+            addSubject(semDiv.querySelector('.btn-add-sub'));
+            // Update the titles (e.g., "Semester 1", "Semester 2")
+            updateSemesterLabels();
+        }
+
+        // Function to remove a semester block when the 'Remove Semester' button is clicked
+        function removeSemester(btn) {
+            // Show a confirmation dialog to prevent accidental deletion
+            if(confirm("Are you sure you want to remove this semester?")) {
+                const semBox = btn.closest('.semester-box');
+                semBox.remove();
+                updateSemesterLabels();
+            }
+        }
+
+        // Function to update the semester titles sequentially
+        function updateSemesterLabels() {
+            const semesters = document.querySelectorAll('.semester-box');
+            semesters.forEach((sem, index) => {
+                const title = sem.querySelector('.sem-title');
+                title.innerText = `Semester ${index + 1}`;
+            });
+        }
+
+        // Function to add a new subject row to a specific semester
+        function addSubject(btn) {
+            // Find the subjects container relative to the clicked button
+            const subjectsContainer = btn.previousElementSibling;
+            subjectsContainer.appendChild(createSubjectRow());
+        }
+
+        // Function to gather all data from the form and send it to the Flask backend
+        function submitForm() {
+            const system = document.getElementById('gradingSystem').value;
+            const semesters = [];
+            
+            const semesterDivs = document.querySelectorAll('.semester-box');
+            
+            semesterDivs.forEach(semDiv => {
+                // For each semester, find all subject rows and extract their data
+                const subjects = [];
+                const rows = semDiv.querySelectorAll('.subject-row');
+                
+                rows.forEach(row => {
+                    const code = row.querySelector('.s-code').value;
+                    const name = row.querySelector('.s-name').value;
+                    const grade = row.querySelector('.s-grade').value;
+                    const credits = row.querySelector('.s-credits').value;
+                    
+                    // Only include the subject if the credit hours are filled in
+                    if(credits) { 
+                        subjects.push({code, name, grade, credits});
+                    }
+                });
+
+                // Only include the semester if it has at least one valid subject
+                if(subjects.length > 0) {
+                    semesters.push({subjects});
+                }
+            });
+
+            // Show an alert if no valid data is ready to be submitted
+            if(semesters.length === 0) {
+                alert("Please ensure you have at least one semester with valid subjects.");
+                return;
+            }
+
+            // Use the Fetch API to send the data to the '/calculate' endpoint
+            fetch('/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ system, semesters }),
+            })
+            .then(response => response.text())
+            // When the HTML response is received, replace the current page content with it
+            .then(html => {
+                document.open();
+                document.write(html);
+                document.close();
+            });
+        }
+
+        // Automatically add one semester when the page loads
+        addSemester();
+    </script>
+</body>
+</html>
