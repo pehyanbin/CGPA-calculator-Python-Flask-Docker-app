@@ -1,10 +1,10 @@
 # DOCKER PYTHON FLASK CGPA CALCULATOR<br>
 This is a simple Swinburne CGPA calculator web application built using Python and Flask, containerized with Docker.<br><br>
-Prerequisites<br>
+### Prerequisites<br>
 - Docker installed on your system<br><br>
 - If you don't have Docker installed, you can download it from the official Docker website: https://www.docker.com/get-started<br><br>
 
-Instructions<br>
+### Instructions<br>
 To run the application, follow these steps:<br>
 1. **Clone the repository**:<br>
    ```bash
@@ -50,5 +50,6 @@ To run the application without Docker, follow these steps:<br>
 ## In Conclusion<br>
 With Docker, you don't need to install any dependencies manually. Docker takes care of everything, including the installation of Python and Flask.<br><br>
 All you need to do is build the Docker image and run the container. Docker will handle the rest, including installing the required dependencies and running the application.<br><br>
+
 
 
