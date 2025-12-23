@@ -38,13 +38,6 @@
             margin-left: 15px;
         }
 
-        /* Style for the clear data button */
-        .btn-clear { 
-            background-color: #FF9800; 
-            color: white; 
-            margin-left: 10px;
-        }
-
         /* Flexbox for the semester header to align title and remove button */
         .sem-header-row {
             display: flex;
@@ -81,7 +74,6 @@
     <div style="margin-top: 20px;">
         <button class="btn-add-sem" onclick="addSemester()">+ Add Semester</button>
         <button class="btn-calc" onclick="submitForm()">Calculate GPA & CGPA</button>
-        <button class="btn-clear" onclick="clearData()">Clear All Data</button>
     </div>
 
     <script>
@@ -127,7 +119,6 @@
             addSubject(semDiv.querySelector('.btn-add-sub'));
             // Update the titles (e.g., "Semester 1", "Semester 2")
             updateSemesterLabels();
-            saveState();
         }
 
         // Function to remove a semester block when the 'Remove Semester' button is clicked
@@ -137,7 +128,6 @@
                 const semBox = btn.closest('.semester-box');
                 semBox.remove();
                 updateSemesterLabels();
-                saveState();
             }
         }
 
@@ -155,7 +145,6 @@
             // Find the subjects container relative to the clicked button
             const subjectsContainer = btn.previousElementSibling;
             subjectsContainer.appendChild(createSubjectRow());
-            saveState();
         }
 
         // Function to gather all data from the form and send it to the Flask backend
@@ -211,107 +200,8 @@
             });
         }
 
-        // --- Local Storage Persistence Logic ---
-
-        const STORAGE_KEY = 'gpa_calculator_data';
-
-        // Function to save the current form state to localStorage
-        function saveState() {
-            const system = document.getElementById('gradingSystem').value;
-            const semesters = [];
-            
-            document.querySelectorAll('.semester-box').forEach(semBox => {
-                const subjects = [];
-                semBox.querySelectorAll('.subject-row').forEach(row => {
-                    subjects.push({
-                        code: row.querySelector('.s-code').value,
-                        name: row.querySelector('.s-name').value,
-                        grade: row.querySelector('.s-grade').value,
-                        credits: row.querySelector('.s-credits').value
-                    });
-                });
-                semesters.push(subjects);
-            });
-            
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ system, semesters }));
-        }
-
-        // Function to load state from localStorage and rebuild the DOM
-        function loadState() {
-            const dataStr = localStorage.getItem(STORAGE_KEY);
-            if (!dataStr) return false;
-
-            try {
-                const data = JSON.parse(dataStr);
-                document.getElementById('gradingSystem').value = data.system || 'AUS';
-                
-                const container = document.getElementById('semesters-container');
-                container.innerHTML = ''; // Clear current content
-
-                if (data.semesters && data.semesters.length > 0) {
-                    data.semesters.forEach(semSubjects => {
-                        // Manually create semester structure to avoid default subject addition of addSemester()
-                        const semDiv = document.createElement('div');
-                        semDiv.className = 'semester-box';
-                        semDiv.innerHTML = `
-                            <div class="sem-header-row">
-                                <h3 class="sem-title">Semester</h3>
-                                <button class="btn-remove-sem" onclick="removeSemester(this)">Remove Semester</button>
-                            </div>
-                            <div class="subjects-container"></div>
-                            <button class="btn-add-sub" onclick="addSubject(this)">+ Add Subject</button>
-                        `;
-                        container.appendChild(semDiv);
-                        
-                        const subContainer = semDiv.querySelector('.subjects-container');
-                        semSubjects.forEach(sub => {
-                            const row = createSubjectRow();
-                            row.querySelector('.s-code').value = sub.code;
-                            row.querySelector('.s-name').value = sub.name;
-                            row.querySelector('.s-grade').value = sub.grade;
-                            row.querySelector('.s-credits').value = sub.credits;
-                            subContainer.appendChild(row);
-                        });
-                    });
-                    updateSemesterLabels();
-                    return true;
-                }
-            } catch (e) {
-                console.error("Failed to load state:", e);
-            }
-            return false;
-        }
-
-        // Function to clear all data
-        function clearData() {
-            if(confirm("Are you sure you want to clear all data?")) {
-                localStorage.removeItem(STORAGE_KEY);
-                document.getElementById('semesters-container').innerHTML = '';
-                document.getElementById('gradingSystem').value = 'AUS';
-                addSemester(); // Reset to default state
-            }
-        }
-
-        // Event listeners for auto-saving on input changes
-        document.addEventListener('input', function(e) {
-            if (e.target.matches('input')) saveState();
-        });
-        document.addEventListener('change', function(e) {
-            if (e.target.matches('select')) saveState();
-        });
-        
-        // Handle removal of subjects (since the button is inside the row)
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('btn-remove-sub')) {
-                // The row is removed by the inline onclick, we just need to save after a brief delay
-                setTimeout(saveState, 0); 
-            }
-        });
-
-        // Initialize: Try to load data, otherwise add default semester
-        if (!loadState()) {
-            addSemester();
-        }
+        // Automatically add one semester when the page loads
+        addSemester();
     </script>
 </body>
 </html>
